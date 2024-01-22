@@ -1,5 +1,8 @@
 package helper
-import "time"
+
+import (
+	"time"
+)
 
 func RemoveString(slice []string, s string) []string {
 	index := -1
@@ -14,7 +17,6 @@ func RemoveString(slice []string, s string) []string {
 	}
 	return append(slice[:index], slice[index+1:]...)
 }
-
 
 func GetLatestDate(date1 time.Time, date2 time.Time) time.Time {
 	if date1.After(date2) {
