@@ -2,6 +2,8 @@ package db
 
 import (
 	"fmt"
+	"time"
+	"twitter_app/helper"
 	"twitter_app/twitter"
 	"twitter_app/user"
 )
@@ -40,26 +42,10 @@ func DeleteUser(UserName string) error {
 	if !ok {
 		return fmt.Errorf("User not found")
 	}
-	//handleDeleteRequest(UserName)
 	delete(DatabaseUser, UserName)
 	return nil
 }
 
-// func handleDeleteRequest(UserName string) error {
-// 	_, ok := DatabaseUser[UserName]
-// 	if !ok {
-// 		return fmt.Errorf("User not found")
-// 	}
-
-// 	for _ , user := range DatabaseUser {
-// 		if user.UserName != UserName {
-// 			newFeed := removeUserTweets(user.Feed, UserName)
-// 			user.Feed := newFeed
-// 		}
-// 	}
-
-//		return nil
-//	}
 func removeUserTweets(tweets []twitter.Tweet, UserName string) []twitter.Tweet {
 	newTweets := make([]twitter.Tweet, 0)
 	for _, tweet := range tweets {
@@ -68,4 +54,49 @@ func removeUserTweets(tweets []twitter.Tweet, UserName string) []twitter.Tweet {
 		}
 	}
 	return newTweets
+}
+
+func Follow(followerName string, followingName string) error {
+	follower, ok1 := DatabaseUser[followerName]
+	following, ok2 := DatabaseUser[followingName]
+	if !ok1 || !ok2 {
+		return fmt.Errorf("User not found")
+	}
+	follower.Following = append(follower.Following, followingName)
+	following.Followers = append(following.Followers, followerName)
+	following.NumberOfFollowers += 1
+	return nil
+}
+
+func Unfollow(followerName string, followingName string) error {
+	follower, ok1 := DatabaseUser[followerName]
+	following, ok2 := DatabaseUser[followingName]
+	if !ok1 || !ok2 {
+		return fmt.Errorf("User not found")
+	}
+	follower.Following = helper.RemoveString(follower.Following, followingName)
+	following.Followers = helper.RemoveString(following.Followers, followerName)
+	if following.NumberOfFollowers > 0 {
+		following.NumberOfFollowers -= 1
+	}
+	return nil
+}
+
+func PostTweet(UserName string, tweetContent string) error {
+	user, ok := DatabaseUser[UserName]
+	if !ok {
+		return fmt.Errorf("User not found")
+	}
+	userTweet := twitter.Tweet{UserName: UserName, Content: tweetContent, Date: time.Now()}
+	user.UserTweets = append(user.UserTweets, userTweet)
+	handlePostTweet(UserName, userTweet)
+	return nil
+}
+
+func handlePostTweet(UserName string, tweetContent twitter.Tweet) {
+	for _, user := range DatabaseUser {
+		if helper.Contains(user.Following, UserName) {
+			user.Feed = append(user.Feed, tweetContent)
+		}
+	}
 }

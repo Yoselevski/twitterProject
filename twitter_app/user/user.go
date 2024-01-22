@@ -5,15 +5,15 @@ import (
 	"sort"
 	"time"
 	"twitter_app/helper"
-	"twitter_app/helper/twitter"
+	"twitter_app/twitter"
 )
 
 type User struct {
 	UserName          string
 	Followers         []string
-	numberOfFollowers int
+	NumberOfFollowers int
 	Following         []string
-	userTweets        []twitter.Tweet
+	UserTweets        []twitter.Tweet
 	Feed              []twitter.Tweet
 }
 
@@ -21,66 +21,15 @@ func CreateUser(UserName string) (*User, error) {
 	user := &User{
 		UserName:          UserName,
 		Followers:         []string{},
-		numberOfFollowers: 0,
+		NumberOfFollowers: 0,
 		Following:         []string{},
-		userTweets:        []twitter.Tweet{},
-		feed:              []twitter.Tweet{},
+		UserTweets:        []twitter.Tweet{},
+		Feed:              []twitter.Tweet{},
 	}
 	return user, nil
 }
 
-func Follow(followerName string, followingName string) error {
-	follower, ok1 := DatabaseUser[followerName]
-	following, ok2 := DatabaseUser[followingName]
-	if !ok1 || !ok2 {
-		return fmt.Errorf("User not found")
-	}
-	follower.Following = append(follower.Following, followingName)
-	following.Followers = append(following.Followers, followerName)
-	following.numberOfFollowers += 1
-	return nil
-}
 
-func Unfollow(followerName string, followingName string) error {
-	follower, ok1 := DatabaseUser[followerName]
-	following, ok2 := DatabaseUser[followingName]
-	if !ok1 || !ok2 {
-		return fmt.Errorf("User not found")
-	}
-	follower.Following = helper.RemoveString(follower.Following, followingName)
-	following.Followers = helper.RemoveString(following.Followers, followerName)
-	if following.numberOfFollowers > 0 {
-		following.numberOfFollowers -= 1
-	}
-	return nil
-}
-
-func getFollowerNames(UserName string) ([]string, error) {
-	user, ok := DatabaseUser[UserName]
-	if !ok {
-		return nil, fmt.Errorf("User not found")
-	}
-	return user.Followers, nil
-}
-
-func getFollowingNames(UserName string) ([]string, error) {
-	user, ok := DatabaseUser[UserName]
-	if !ok {
-		return nil, fmt.Errorf("User not found")
-	}
-	return user.Following, nil
-}
-
-func PostTweet(UserName string, tweetContent string) error {
-	user, ok := DatabaseUser[UserName]
-	if !ok {
-		return fmt.Errorf("User not found")
-	}
-	userTweet := Tweet{UserName: UserName, Content: tweetContent, Date: time.Now()}
-	user.userTweets = append(user.userTweets, userTweet)
-	handlePostTweet(UserName, userTweet)
-	return nil
-}
 
 func handlePostTweet(UserName string, tweetContent Tweet) {
 	for _, user := range DatabaseUser {
@@ -97,7 +46,7 @@ func handleFollowRequest(followerName string, followingName string) error {
 		return fmt.Errorf("User not found")
 	}
 
-	follower.feed = append(follower.feed, following.userTweets...)
+	follower.feed = append(follower.feed, following.UserTweets...)
 	sortTweetsByDate(follower.feed)
 	return nil
 }
@@ -171,7 +120,7 @@ func GetTopInfluencers(n int) ([]User, error) {
 		sortedUsers = append(sortedUsers, user)
 	}
 	sort.Slice(sortedUsers, func(i, j int) bool {
-		return sortedUsers[i].numberOfFollowers > sortedUsers[j].numberOfFollowers
+		return sortedUsers[i].NumberOfFollowers > sortedUsers[j].NumberOfFollowers
 	})
 
 	// Return the top 'n' users
